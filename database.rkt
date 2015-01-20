@@ -26,6 +26,7 @@
 
   Returns a list of the attributes in 'table', in the order they appear.
 |#
+;Jasmin
 (define attributes (void))
 
 #|
@@ -35,6 +36,7 @@
   Returns a list of all tuples in 'table', in the order they appear.
   Note: it is possible for 'table' to contain no tuples.
 |#
+;Haris
 (define tuples (void))
 
 #|
@@ -42,7 +44,7 @@
   table: a valid table
 
   Returns the number of tuples in 'table'.
-|#
+|#;Haris
 (define size (void))
 
 
@@ -55,7 +57,7 @@ A function that takes:
   - a tuple
 
   and returns the value of the tuple corresponding to that attribute.
-|#
+|#;Haris
 
 #|
 A function that takes:
@@ -64,7 +66,7 @@ A function that takes:
 
   and returns a new table containing only the tuples in 'table'
   that satisfy 'f'.
-|#
+|#;Jasmin
 
 #|
 A function 'replace-attr' that takes:
@@ -77,6 +79,28 @@ A function 'replace-attr' that takes:
     - Otherwise, just ignore the tuple and return 'x'.
 |#
 
+#|
+;Select/From
+-table: list of list
+-attribute: list
+return a table with only the columns in the list of aatributes
+;Q:how to allow multiple tables
+Note: * must implement
+
+Where
+-boolean: "age == 0"
+-table: the tuples
+return only the tuples that satisfy the boolean
+use helper function
+
+
+Orderby
+-atributes: list of attributes where the values in that column evaluate to a number
+-table: of tuples
+
+return a table sorted in non increasing order of the values
+Q: do we have to be albe to order my multiple attributes one after the other
+|#
 
 ; Starter for Part 4; feel free to ignore!
 
