@@ -1,8 +1,8 @@
 #| Assignment 1 - Racket Query Language (due February 11, noon)
 
 ***Write the names and CDF accounts for each of your group members below.***
-<Name>, <CDF>
-<Name>, <CDF>
+Jasmin Lantos, <CDF>
+Haris Shoaib, g3shoaib
 |#
 #lang racket
 
@@ -37,15 +37,26 @@
   Note: it is possible for 'table' to contain no tuples.
 |#
 ;Haris
-(define tuples (void))
 
+(define (tuples table)
+  (tuples-helper (rest table))
+  )
+
+(define (tuples-helper table)
+  (if (empty? table)
+      '()
+      (cons (first table) (rest table))
+  )
+  )
 #|
 (size table)
   table: a valid table
 
   Returns the number of tuples in 'table'.
 |#;Haris
-(define size (void))
+(define (size table)
+  (length (rest table))
+  )
 
 
 ; Part I "WHERE" helpers; you may or may not wish to implement these.
@@ -59,6 +70,10 @@ A function that takes:
   and returns the value of the tuple corresponding to that attribute.
 |#;Haris
 
+#|(define (where-helper-1 attibutes string tuple)
+  (where-helper-1 
+  )
+|#
 #|
 A function that takes:
   - f: a unary function that takes a tuple and returns a boolean value
