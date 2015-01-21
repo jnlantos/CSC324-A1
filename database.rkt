@@ -27,7 +27,7 @@
   Returns a list of the attributes in 'table', in the order they appear.
 |#
 ;Jasmin
-(define attributes (void))
+(define (attributes table) (first table))
 
 #|
 (tuples table)
@@ -59,6 +59,9 @@ A function that takes:
   and returns the value of the tuple corresponding to that attribute.
 |#;Haris
 
+
+
+
 #|
 A function that takes:
   - f: a unary function that takes a tuple and returns a boolean value
@@ -67,6 +70,11 @@ A function that takes:
   and returns a new table containing only the tuples in 'table'
   that satisfy 'f'.
 |#;Jasmin
+
+;(define (e? tuple) (if (equal? tuple '(1 2 3)) #t #f))
+
+(define (satisfies f table)
+                     (filter (lambda (x) (f x)) table))
 
 #|
 A function 'replace-attr' that takes:
