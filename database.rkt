@@ -82,7 +82,7 @@ A function that takes:
   and returns a new table containing only the tuples in 'table'
   that satisfy 'f'.
 |#;Jasmin
-
+;Example unary function:
 ;(define (e? tuple) (if (equal? tuple '(1 2 3)) #t #f))
 
 (define (satisfies f table)
