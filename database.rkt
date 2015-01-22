@@ -70,6 +70,8 @@ A function that takes:
   and returns the value of the tuple corresponding to that attribute.
 |#;Haris
 
+#| HELLOO WORLD! |#
+
 #|(define (where-helper-1 attibutes string tuple)
   (where-helper-1 
   )
