@@ -1,8 +1,8 @@
 #| Assignment 1 - Racket Query Language Tests (due February 11, noon)
 
 ***Write the names and CDF accounts for each of your group members below.***
-<Name>, <CDF>
-<Name>, <CDF>
+Haris Shoaib, g3shoaib
+Jasmin Lantos, g4lantos
 |#
 
 ; Note the use of plai here; this is required for "test"
@@ -33,6 +33,9 @@
     ("David" "CSC343")
     ))
 
+(define Person-NoTuple
+'(("Name" "Age" "LikesChocolate")))
+
 
 #|
 All tests go below. 
@@ -49,6 +52,30 @@ and your TAs will appreciate it!
 
 
 ; ---- SELECT/FROM tests ----
+
+
+; Select none (1)
+(test (SELECT '() FROM Person)
+      '(() 
+        ()
+        ()
+        ()))
+
+; Select from empty table (2)
+(test (SELECT '("Age") FROM '(()()))
+      '(()()))
+
+; Select from table with empty tuples (3)
+(test (SELECT '("Age") FROM Person-NoTuple)
+      '(("Age")))
+
+; Select one attribute (4)
+(test (SELECT '("Name") FROM Person)
+      '(("Name")
+        ("David")
+        ("Jen")
+        ("Paul")))
+
 ; Select all
 (test (SELECT * FROM Person)
       '(("Name" "Age" "LikesChocolate") 
@@ -81,6 +108,23 @@ and your TAs will appreciate it!
    ("Hi" 5)
    ("Bye" 5)
    ("Hi" 10)))
+
+; Select duplicates from two tables (6)
+(test (SELECT '("T.Name") FROM [Person "P"] [Teaching "T"])
+      '(("T.Name")
+        ("David")
+        ("Paul") 
+        ("David") 
+        ("David") 
+        ("Paul") 
+        ("David") 
+        ("David") 
+        ("Paul") 
+        ("David")))
+
+; Select all from a table with no tuples and another table (7)
+(test (SELECT * FROM [Person-NoTuple "N"] [Teaching "T"] )
+      '(("N.Name" "Age" "LikesChocolate" "T.Name" "Course")))
 
 ; Select all from two product of two tables
 (test (SELECT * FROM [Person "P"] [Teaching "T"])
@@ -159,11 +203,33 @@ and your TAs will appreciate it!
         (#t "David")
         (#t "Jen")))
 
+; Attribute as a condition, without selecting conditional attribute (1)
+(test (SELECT '("Name") 
+        FROM Person 
+        WHERE "LikesChocolate")
+      '(("Name")
+        ("David")
+        ("Jen")))
+
+; False boolean value of Attribute as a condition (2)
+(test (SELECT '("LikesChocolate" "Name") 
+        FROM Person
+        WHERE (equal? #f "LikesChocolate"))
+     '(("LikesChocolate" "Name")
+        (#f "Paul")))
+
 ; Condition as function of one attribute, select all
 (test (SELECT *
         FROM Person
         WHERE (< 50 "Age"))
       '(("Name" "Age" "LikesChocolate")
+        ("Paul" 100 #f)))
+
+; Condition as function of one attribute but at different order, select all (3)
+(test (SELECT * 
+        FROM Person 
+        WHERE (> "Age" 50)) 
+       '(("Name" "Age" "LikesChocolate")
         ("Paul" 100 #f)))
 
 ; Condition as function of one attribute, select none
@@ -173,6 +239,12 @@ and your TAs will appreciate it!
       '(()
         ()
         ()))
+
+; Condition as a function of two attributes, select all (4)
+(test (SELECT * 
+        FROM Person 
+        WHERE (> "Age" (string-length "Name")))
+      Person)
 
 ; Constant true condition
 (test (SELECT *
@@ -198,6 +270,14 @@ and your TAs will appreciate it!
         (3 2)
         (40 10)))
 
+; Compound condition on single table (5)
+(test (SELECT *
+        FROM Person
+        WHERE (Or (equal? "Name" "David") (And (> "Age" 1) (If "LikesChocolate" #f #t))))
+     '(("Name" "Age" "LikesChocolate")
+       ("David" 20 #t)
+       ("Paul" 100 #f)))
+
 ; Simple condition on joined tables
 (test (SELECT *
         FROM [Person "P"] [Teaching "T"]
@@ -219,6 +299,15 @@ and your TAs will appreciate it!
         ("Paul" #f 30 "CSC108")
         ("David" #t 30 "CSC343")))
 
+; Compound condition as a function of one shared attribute on two joined tables, attribute not selected (6)
+(test (SELECT '("Age" "LikesChocolate") 
+        FROM [Person "P"] [Teaching "T"]
+        WHERE (equal? "P.Name" "T.Name"))
+      '(("Age" "LikesChocolate") 
+        (20 #t) 
+        (20 #t) 
+        (100 #f))
+      )
 
 ; ---- ORDER BY ----
 ; Order by attribute
@@ -286,7 +375,84 @@ and your TAs will appreciate it!
         ("David" 20 #t "Paul" "CSC108")
         ("David" 20 #t "David" "CSC343")))
 
+; Order by compound expression on literal table (1)
+(test (SELECT *
+        FROM '(("Height" "Name" "Age") (6 "Jasmin" 18) (5 "Jennifer" 20) (5 "Haris" 20) (50 "David" 1))
+        ORDER BY (+ (string-length "Name") "Height"))
+      '(("Height" "Name" "Age")
+        (50 "David" 1)
+        (5 "Jennifer" 20)
+        (6 "Jasmin" 18)
+        (5 "Haris" 20)))
 
+; Order by function of an attribute on the product of a table with itself (2)
+(test (SELECT *
+        FROM [Teaching "T"] [Teaching "S"]
+        ORDER BY (- (string-length "Name") (string-length "Course")))
+      '(("T.Name" "T.Course" "S.Name" "S.Course")
+        ("David" "CSC324" "David" "CSC324")
+        ("David" "CSC324" "Paul" "CSC108")
+        ("David" "CSC324" "David" "CSC343")
+        ("Paul" "CSC108" "David" "CSC324")
+        ("Paul" "CSC108" "Paul" "CSC108")
+        ("Paul" "CSC108" "David" "CSC343")
+        ("David" "CSC343" "David" "CSC324")
+        ("David" "CSC343" "Paul" "CSC108")
+        ("David" "CSC343" "David" "CSC343")))
+      
+ ; Order by function of two attributes on three tables (3)
+(test (SELECT *
+        FROM [Teaching "T"] [Teaching "S"] [Person "P"]
+        ORDER BY (/ (string-length "Name") "Age"))
+      '(("T.Name" "T.Course" "S.Name" "S.Course" "P.Name" "Age" "LikesChocolate")
+        ("David" "CSC324" "David" "CSC324" "David" 20 #t)
+        ("David" "CSC324" "Paul" "CSC108" "David" 20 #t)
+        ("David" "CSC324" "David" "CSC343" "David" 20 #t)
+        ("Paul" "CSC108" "David" "CSC324" "David" 20 #t)
+        ("Paul" "CSC108" "Paul" "CSC108" "David" 20 #t)
+        ("Paul" "CSC108" "David" "CSC343" "David" 20 #t)
+        ("David" "CSC343" "David" "CSC324" "David" 20 #t)
+        ("David" "CSC343" "Paul" "CSC108" "David" 20 #t)
+        ("David" "CSC343" "David" "CSC343" "David" 20 #t)
+        ("David" "CSC324" "David" "CSC324" "Jen" 30 #t)
+        ("David" "CSC324" "Paul" "CSC108" "Jen" 30 #t)
+        ("David" "CSC324" "David" "CSC343" "Jen" 30 #t)
+        ("Paul" "CSC108" "David" "CSC324" "Jen" 30 #t)
+        ("Paul" "CSC108" "Paul" "CSC108" "Jen" 30 #t)
+        ("Paul" "CSC108" "David" "CSC343" "Jen" 30 #t)
+        ("David" "CSC343" "David" "CSC324" "Jen" 30 #t)
+        ("David" "CSC343" "Paul" "CSC108" "Jen" 30 #t)
+        ("David" "CSC343" "David" "CSC343" "Jen" 30 #t)
+        ("David" "CSC324" "David" "CSC324" "Paul" 100 #f)
+        ("David" "CSC324" "Paul" "CSC108" "Paul" 100 #f)
+        ("David" "CSC324" "David" "CSC343" "Paul" 100 #f)
+        ("Paul" "CSC108" "David" "CSC324" "Paul" 100 #f)
+        ("Paul" "CSC108" "Paul" "CSC108" "Paul" 100 #f)
+        ("Paul" "CSC108" "David" "CSC343" "Paul" 100 #f)
+        ("David" "CSC343" "David" "CSC324" "Paul" 100 #f)
+        ("David" "CSC343" "Paul" "CSC108" "Paul" 100 #f)
+        ("David" "CSC343" "David" "CSC343" "Paul" 100 #f)))
+
+; Order by constant number (4)
+ (test (SELECT *
+         FROM Person ORDER BY 1)
+       '(("Name" "Age" "LikesChocolate")
+         ("David" 20 #t)
+         ("Jen" 30 #t)
+         ("Paul" 100 #f)))
+
+; Order by on an attribute on a table with no tuples (5)
+ (test (SELECT * 
+         FROM Person-NoTuple
+         ORDER BY "Age")
+       '(("Name" "Age" "LikesChocolate")))
+ 
+; Order by on an attribute on an empty table (6)
+ (test (SELECT * 
+         FROM '(())
+         ORDER BY "Age")
+       '(()))
+             
 ; ---- ORDER BY and WHERE ----
 ; Use attributes, select all 
 (test
@@ -307,6 +473,28 @@ and your TAs will appreciate it!
  '(("Name")
    ("Jen")
    ("David")))
+
+; Use empty table (1)
+
+(test (SELECT *
+        FROM '(())
+        WHERE '("LikesChocolate")
+        ORDER BY "Age")
+      '(()))
+
+; Use a table with no tuples (2)
+(test (SELECT *
+        FROM Person-NoTuple 
+        WHERE '("LikesChocolate")
+        ORDER BY "Age")
+      '(("Name" "Age" "LikesChocolate")))
+
+; Use predicate that evaluates to false for every tuple (3)
+(test (SELECT *
+        FROM Person
+        WHERE (< "Age" 20)
+        ORDER BY "Age")
+      '(("Name" "Age" "LikesChocolate")))
 
 ; Two joined tables, select all
 (test
@@ -330,8 +518,89 @@ and your TAs will appreciate it!
    ("David" "CSC324" #t)
    ("David" "CSC343" #t)))
 
- 
+; Three joined tables, select all (4)
+(test (SELECT *
+        FROM [Teaching "T"] [Teaching "S"] [Person "P"]
+        WHERE (And (equal? "T.Name" "David") (equal? "T.Course" "CSC324")))
+      '(("T.Name" "T.Course" "S.Name" "S.Course" "P.Name" "Age" "LikesChocolate")
+        ("David" "CSC324" "David" "CSC324" "David" 20 #t)
+        ("David" "CSC324" "David" "CSC324" "Jen" 30 #t)
+        ("David" "CSC324" "David" "CSC324" "Paul" 100 #f)
+        ("David" "CSC324" "Paul" "CSC108" "David" 20 #t)
+        ("David" "CSC324" "Paul" "CSC108" "Jen" 30 #t)
+        ("David" "CSC324" "Paul" "CSC108" "Paul" 100 #f)
+        ("David" "CSC324" "David" "CSC343" "David" 20 #t)
+        ("David" "CSC324" "David" "CSC343" "Jen" 30 #t)
+        ("David" "CSC324" "David" "CSC343" "Paul" 100 #f)))
+
+; Two joined tables, use order by on attribute with same value for all tuples in resulting table of where (5)
+(test (SELECT *
+        FROM [Person "P"] [Teaching "T"]
+        WHERE (And (equal? "P.Name" "David") (equal? "T.Name" "David"))
+        ORDER BY "Age")
+      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course") 
+        ("David" 20 #t "David" "CSC324") 
+        ("David" 20 #t "David" "CSC343")))      
+
 ; ---- Nested queries ----
+
+; Select all from resulting empty table (1)
+(test (SELECT *
+        FROM (SELECT * FROM Person WHERE (> "Age" 100)))
+      '(("Name" "Age" "LikesChocolate")))
+
+; Select attributes from resulting product of two tables (2)
+(test (SELECT '("P.Name" "T.Name")
+        FROM (SELECT * FROM [Person "P"] [Teaching "T"]))
+      '(("P.Name" "T.Name") 
+        ("David" "David") 
+        ("David" "Paul") 
+        ("David" "David") 
+        ("Jen" "David") 
+        ("Jen" "Paul") 
+        ("Jen" "David") 
+        ("Paul" "David") 
+        ("Paul" "Paul") 
+        ("Paul" "David")))
+
+; Select attributes in different order from attributes of resulting table (3)
+(test (SELECT '("LikesChocolate" "Age")
+        FROM (SELECT * FROM [Person "P"] [Teaching "T"]))
+      '(("LikesChocolate" "Age") 
+        (#t 20) 
+        (#t 20) 
+        (#t 20) 
+        (#t 30) 
+        (#t 30) 
+        (#t 30) 
+        (#f 100) 
+        (#f 100) 
+        (#f 100)))
+
+;Nested Where Condition (4)
+(test (SELECT *
+       FROM [Person "P"] [Teaching "T"]
+       WHERE (And (equal? "P.Name" "T.Name") (if (equal? "P.Name" "David") #f #t))
+       ORDER BY "Age")
+      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
+        ("Paul" 100 #f "Paul" "CSC108")))
+
+; Nested Order by Expression (5)
+(test (SELECT *
+        FROM [Person "P"] [Teaching "T"]
+        WHERE '("LikesChocolate")
+        ORDER BY (+ (+ (string-length "P.Name") (string-length "T.Name")) "Age"))                                                                                  
+      '(("P.Name" "Age" "LikesChocolate" "T.Name" "Course")
+        ("Paul" 100 #f "David" "CSC324")
+        ("Paul" 100 #f "David" "CSC343")
+        ("Paul" 100 #f "Paul" "CSC108")
+        ("Jen" 30 #t "David" "CSC324")
+        ("Jen" 30 #t "David" "CSC343")
+        ("Jen" 30 #t "Paul" "CSC108")
+        ("David" 20 #t "David" "CSC324")
+        ("David" 20 #t "David" "CSC343")
+        ("David" 20 #t "Paul" "CSC108")))
+        
 (test
  (SELECT * 
    FROM (SELECT '("Age" "Name") FROM Person))
